@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using MovieApi.Models;
+using MovieApi.Services;
 
 
 namespace MovieApi.Controllers;
@@ -10,23 +14,28 @@ public class MovieController : ControllerBase
 {
     private static readonly List<Movie> movies = new List<Movie>(10)
     {
-        new Movie {Name = "Citizen Kane", Genre = "Drama", Year = 1941},
-        new Movie {Name = "The Wizard of Oz", Genre = "Fantasy", Year = 1939},
-        new Movie {Name = "The Godfather", Genre = "Crime", Year = 1972}
+        new Movie {Name = "Citizen Smith", Genre = "Drama", Year = 1941},
+        new Movie {Name = "The Warlock of Oz", Genre = "Fantasy", Year = 1939},
+        new Movie {Name = "The GrandMother", Genre = "Crime", Year = 1972}
     };
 
     private readonly ILogger<MovieController> _logger;
 
-    public MovieController(ILogger<MovieController> logger)
+    private IMovieService _service;
+
+
+    public MovieController(ILogger<MovieController> logger, IMovieService service)
     {
         _logger = logger;
+        _service = service;
     }
 
     [HttpGet]//(Name = "GetMovie")]
     public IActionResult GetMovies()
     {
-        if(movies != null)
-            return Ok(movies);
+        IEnumerable<Movie> list = _service.GetMovies();
+        if(list != null)
+            return Ok(list);
         else 
             return BadRequest();
     }
