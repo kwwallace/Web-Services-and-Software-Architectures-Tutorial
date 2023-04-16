@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MovieApi.Models;
+using MySql.Data.MySqlClient;
 
 
 namespace MovieApi.Repository
@@ -11,43 +12,84 @@ namespace MovieApi.Repository
             new Movie {Name = "The Wizard of Oz", Genre = "Fantasy", Year = 1939},
             new Movie {Name = "The Godfather", Genre = "Crime", Year = 1972}
         };
-
-        public MovieRepository() { 
-            
+        private MySqlConnection _connection;
+        public MovieRepository() {
+            string connectionString = "server=localhost;userid=csci330user;password=csci330pass;database=entertainment";
+            _connection = new MySqlConnection(connectionString);
+            _connection.Open();
         }
 
-        public IEnumerable<Movie> GetAll() { return movies; }
+        ~MovieRepository(){
+            _connection.Close();
+        }
+
+        public IEnumerable<Movie> GetAll() {
+            var statement = "Select * from Movies";
+            var command = new MySqlCommand(statement, _connection);
+            var results = command.ExecuteReader();
+
+            List<Movie> newList = new List<Movie>(20);
+
+            while (results.Read()){
+                Movie m = new Movie {
+                    Name = (string)results[1],
+                    Genre = (string)results[3],
+                    Year = (int)results[2]
+                };
+                newList.Add(m);
+            }
+            results.Close();
+            return newList;
+        }
 
         public Movie? GetMovieByName(string name) { 
-            foreach (Movie m in movies){
-                if (m.Name.Equals(name)){
-                    return m;
+            var statement = "Select * from Movies where Name = @newName";
+            var command = new MySqlCommand(statement, _connection);
+            command.Parameters.AddWithValue("@newName", name);
+
+            var results = command.ExecuteReader();
+            Movie m=null;
+            if(results.Read()){
+                m = new Movie {
+                    Name = (string)results[1],
+                    Genre = (string)results[3],
+                    Year = (int)results[2]
                 };
             }
-            return null;
-            
+            results.Close();
+            return m;
+
+
         }
 
         public void InsertMovie(Movie m) {
-            movies.Add(m);
+            var statement = "INSERT into Movies (Name, Year, Genre) Values(@n,@y, @g)";
+            var command = new MySqlCommand(statement, _connection);
+            command.Parameters.AddWithValue("@n", m.Name);
+            command.Parameters.AddWithValue("@y", m.Year);
+            command.Parameters.AddWithValue("@g", m.Genre);
+
+            int result = command.ExecuteNonQuery();
+            Console.WriteLine(result);
         }
 
         public void UpdateMovie(string name, Movie movieIn) {
-            foreach (Movie m in movies){
-                if (m.Name.Equals(name)){
-                    m.Name = movieIn.Name;
-                    m.Genre = movieIn.Genre;
-                    m.Year = movieIn.Year;
-                };
-            }
+            var statement = "Update Movies Set Name=@newName, Year=@newYear, Genre=@newGenre Where Name=@updateName";
+            var command = new MySqlCommand(statement, _connection);
+            command.Parameters.AddWithValue("@newName", movieIn.Name);
+            command.Parameters.AddWithValue("@newYear", movieIn.Year);
+            command.Parameters.AddWithValue("@newGenre", movieIn.Genre);
+            command.Parameters.AddWithValue("@updateName", name);
+
+            int result = command.ExecuteNonQuery();
         }
 
         public void DeleteMovie(string name) {
-            foreach (Movie m in movies){
-                if(m.Name.Equals(name)){
-                    movies.Remove(m);
-                }
-            }
+            var statement = "Delete from Movies Where Name=@delName";
+            var command = new MySqlCommand(statement, _connection);
+            command.Parameters.AddWithValue("@delName", name);
+
+            int result = command.ExecuteNonQuery();
         }
     }
 }
