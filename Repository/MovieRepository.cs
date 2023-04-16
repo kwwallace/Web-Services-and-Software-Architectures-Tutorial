@@ -6,12 +6,12 @@ using MySql.Data.MySqlClient;
 namespace MovieApi.Repository
 {
     public class MovieRepository : IMovieRepository {
-        private static readonly List<Movie> movies = new List<Movie>(10)
-        {
-            new Movie {Name = "Citizen Kane", Genre = "Drama", Year = 1941},
-            new Movie {Name = "The Wizard of Oz", Genre = "Fantasy", Year = 1939},
-            new Movie {Name = "The Godfather", Genre = "Crime", Year = 1972}
-        };
+        // private static readonly List<Movie> movies = new List<Movie>(10)
+        // {
+        //     new Movie {Name = "Citizen Kane", Genre = "Drama", Year = 1941},
+        //     new Movie {Name = "The Wizard of Oz", Genre = "Fantasy", Year = 1939},
+        //     new Movie {Name = "The Godfather", Genre = "Crime", Year = 1972}
+        // };
         private MySqlConnection _connection;
         public MovieRepository() {
             string connectionString = "server=localhost;userid=csci330user;password=csci330pass;database=entertainment";
@@ -42,10 +42,30 @@ namespace MovieApi.Repository
             return newList;
         }
 
-        public Movie? GetMovieByName(string name) { 
+        public Movie GetMovieByName(string name) { 
             var statement = "Select * from Movies where Name = @newName";
             var command = new MySqlCommand(statement, _connection);
             command.Parameters.AddWithValue("@newName", name);
+
+            var results = command.ExecuteReader();
+            Movie m=null;
+            if(results.Read()){
+                m = new Movie {
+                    Name = (string)results[1],
+                    Genre = (string)results[3],
+                    Year = (int)results[2]
+                };
+            }
+            results.Close();
+            return m;
+
+
+        }
+
+        public Movie GetMovieByYear(int year) { 
+            var statement = "Select * from Movies where Year = @newYear";
+            var command = new MySqlCommand(statement, _connection);
+            command.Parameters.AddWithValue("@newYear", year);
 
             var results = command.ExecuteReader();
             Movie m=null;

@@ -23,7 +23,7 @@ public class MovieController : ControllerBase
         _service = service;
     }
 
-    [HttpGet]//(Name = "GetMovie")]
+    [HttpGet]
     public IActionResult GetMovies()
     {
         IEnumerable<Movie> list = _service.GetMovies();
